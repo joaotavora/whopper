@@ -36,29 +36,6 @@
    #:*yaclml-stream*
    #:*yaclml-indent*
 
-   ;; tal
-   #:compile-tal-string
-   #:compile-tal-file
-   #:def-attribute-handler
-   #:def-tag-handler
-   #:read-tal-expression-from-string
-   #:tal-generator
-   #:file-system-generator
-   #:load-tal
-   #:template-truename
-   #:root-directories
-   #:*uri-to-package*
-   #:transform-lxml-form
-   #:transform-lxml-tree
-
-   #:make-standard-tal-environment
-   #:tal-env
-   #:tal-value
-   #:extend-environment
-   #:-tal-environment-
-   #:lookup-tal-variable
-   #:fetch-tal-value
-
    #:href
 
    #:+xhtml-strict-doctype+
@@ -120,21 +97,6 @@
   (:use :cl :it.bese.yaclml :iterate)
   (:documentation "SVG library.")
   (:nicknames :svg :<svg))
-
-(defpackage :it.bese.yaclml.tal
-  (:use)
-  (:documentation "An HTML template authoring library.")
-  (:nicknames :tal)
-  (:export #:tal 
-           #:content
-           #:replace
-           #:when
-           #:dolist
-           #:include
-           #:in-package))
-
-(defpackage :it.bese.yaclml.tal.include-params
-  (:use))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 

@@ -71,8 +71,6 @@
 ;;;;   =>
 ;;;;   <td>whatever</td>
 
-(defvar *tal-truename*)
-
 (defvar *yaclml-stream* t
   "The stream to which tags are printed.")
 
@@ -367,130 +365,6 @@ and just wrap the body in an xml tag."
        (prog1
           (progn ,@body)
          (emit-close-tag ,tname)))))
-
-(defvar *xml-reader-open-char* #\<)
-(defvar *xml-reader-close-char* #\>)
-
-(defmacro enable-xml-syntax ()
-  "Enable xml reader syntax for the file being compiled or loaded.
-
-You may consider using (enable-bracket-reader):
-  {with-xml-syntax
-    <foo :attr \"bar\" (lisp) >}
-
-Syntax examples:
-  <foo :attribute \"bar\" (call lisp code) >
-
-  <(progn 33) :bar 42 (@ \"cAMeL\" \"eLitE-<>\") \"body-<>\" >
-==>
-  <33 bar=\"42\" cAMeL=\"eLitE-&lt;&gt;\"
-    >body-&lt;&gt;</33
-  >
-
-  <\"foo\" :bar 42>
-==>
-  <foo bar=\"42\"/>"
-  '(eval-when (:compile-toplevel :execute)
-    (setf *readtable* (copy-readtable *readtable*))
-    (%enable-xml-syntax)))
-
-(defun %enable-xml-syntax ()
-  (set-macro-character *xml-reader-open-char* #'xml-reader-open nil *readtable*))
-
-(defun xml-reader-open (s char)
-  "Emit XML elements into *yaclml-stream*, use keyword parameters
-for attributes and rest parameters for nested XML elements or
-normal lisp code. See enable-xml-syntax for more details."
-  ;;; (attila) this code here makes sure not to use two unread-char calls
-  ;;; as it's unspecified by the standard. and therefore the ugliness here...
-  ;;; we create a fake package, read the token in there, delete the package
-  ;;; and analize what was read.
-  (let ((fake-package (make-package (gensym)))
-        (symbol nil)
-        (symbol-name nil)
-        (next-char nil)
-        ;; simple-version means that the xml tag name is a symbol, e.g. <foo
-        ;; otherwise it's a <"foo" or a <(foo). unless it's a symbol it is
-        ;; evaluated and the result is used as the tag name.
-        (simple-version t))
-    (unwind-protect
-         (progn
-           (unread-char char s)
-           (setf symbol (with-standard-io-syntax ; turn ourselves off
-                            (let ((*package* fake-package))
-                              (read s t nil t))))
-           (setf symbol-name (string-downcase (symbol-name symbol))))
-      (delete-package fake-package))
-    ;;(format t "Read in symbol ~S, symbol-package is ~S~%" symbol (symbol-package symbol)) ; TODO debug code
-    (setf next-char (peek-char nil s t nil t))
-    (if (and (string= symbol-name "<")
-             (or (eq next-char #\( )
-                 (eq next-char #\" )))
-        (setf simple-version nil)
-        (when (and (symbol-package symbol)
-                   (not (eq (symbol-package symbol)
-                            fake-package)))
-          ;;(format t "Bailing out with ~S~%" symbol) ; TODO debug code
-          (return-from xml-reader-open symbol)))
-    ;;(format t "We've got a hit, simple-version? ~S~%" simple-version) ; TODO debug code
-    (let ((*readtable* (copy-readtable)))
-      (set-syntax-from-char *xml-reader-close-char* #\) *readtable*)
-      (labels ((writer (form)
-                 (if (stringp form)
-                     `(write-string ,form *yaclml-stream*)
-                     form))
-               (emitter (form)
-                 (mapcar #'writer (fold-strings (nreverse form)))))
-        (let* ((list (let ((result (read-delimited-list #\> s t)))
-                       ;;(format t "The delimited list is ~S~%" result) ; TODO debug code
-                       result))
-               (head (if simple-version
-                         (subseq symbol-name 1) ; drop the "<" from the symbol-name
-                         (car list)))
-               (tag-name (if (or (stringp head) (consp head))
-                             head
-                             (string-downcase (princ-to-string head))))
-               (%yaclml-code% nil)
-               (%yaclml-indentation-depth% 0))
-          (attribute-bind (&allow-other-attributes other-attributes &body body)
-              (if simple-version
-                  list
-                  (cdr list))
-            (if body
-                (let* ((open-code)
-                       (body-code)
-                       (close-code)
-                       (rebind-tag-name-p (consp tag-name))
-                       (original-tag-name tag-name))
-                  (when rebind-tag-name-p
-                    (setf tag-name (gensym "TAG-NAME")))
-                  (let ((%yaclml-code% '()))
-                    (emit-open-tag tag-name other-attributes)
-                    (setf open-code %yaclml-code%))
-                  (let ((%yaclml-code% '()))
-                    (emit-body body)
-                    (setf body-code %yaclml-code%))
-                  (let ((%yaclml-code% '()))
-                    (emit-close-tag tag-name)
-                    (setf close-code %yaclml-code%))
-                  (if rebind-tag-name-p
-                      (emit-code `(let ((,tag-name ,original-tag-name))
-                                   ,@(emitter open-code)
-                                   ,@(emitter body-code)
-                                   ,@(emitter close-code)))
-                      (emit-code `(progn
-                                   ,@(emitter open-code)
-                                   ,@(emitter body-code)
-                                   ,@(emitter close-code)))))
-                (emit-empty-tag tag-name other-attributes)))
-          `(progn
-            ,@(emitter %yaclml-code%)
-            (values)))))))
-
-(defun with-xml-syntax ()
-  (lambda (handler)
-    (%enable-xml-syntax)
-    `(progn ,@(funcall handler))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 
