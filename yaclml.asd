@@ -8,15 +8,16 @@
 (defsystem :yaclml
   :serial t
   :components ((:file "package")
+               (:file "utils")
                (:file "attribute-bind")
+               (:file "http")
                (:file "yaclml")
                (:module :tags
                 :serial t
                 :components ((:file "html4")
                              (:file "standard-yaclml")
-                             (:file "svg")
                              (:file "html+"))))
-  :depends-on ())
+  :depends-on (:alexandria))
 
 (defsystem :yaclml.test
   :components ()

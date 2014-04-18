@@ -88,7 +88,7 @@
 
 (defmacro with-yaclml-output-to-string (&body body)
   "Evaluate BODY with *yaclml-stream* bound to a string stream, return the string."
-  (with-unique-names (output)
+  (alexandria:with-unique-names (output)
     `(with-output-to-string (,output)
        (with-yaclml-stream ,output
          ,@body))))
@@ -173,10 +173,11 @@
 
 (defun emit-attribute-value (value)
   (if (listp value)
-      (iter (for el in value)
-            (unless (first-time-p)
-              (princ #\Space *yaclml-stream*))
-            (write-as-html (princ-to-string el) :stream *yaclml-stream*))
+      (loop for el in value
+            for i from 0
+            unless (zerop i)
+              do (princ #\Space *yaclml-stream*)
+            do (write-as-html (princ-to-string el) :stream *yaclml-stream*))
       (write-as-html (princ-to-string value) :stream *yaclml-stream*)))
 
 (defun emit-princ-attributes (attributes)
@@ -189,37 +190,38 @@ If the value of any of the attributes is NIL it will be ignored.
 
 If a value is the symbol T the name of the attribute will be used
 as the value."
-  (iter (while attributes)
-        (for key = (pop attributes))
-        (if (runtime-attribute-list-reference-p key)
-            (emit-code `(iter (for (name value) :on ,(ralr-form key) :by #'cddr)
-                              (unless (stringp name)
-                                (setf name (string-downcase (string name))))
-                              (emit-attribute name value)))
-            (let ((value (pop attributes)))
-              (cond
-                ((eql t value)
-                 ;; according to xhtml thoses attributes which in html are
-                 ;; specified without a value should just use the attribute
-                 ;; name as the xhtml value
-                 (emit-princ " " key "=\"" key "\""))
-                ((eql nil value) nil)
-                ((yaclml-constant-p value)
-                 (progn
-                   (emit-princ " " key "=\"")
-                   (emit-html value)
-                   (emit-princ "\"")))
-                (t
-                 (if (and (consp value)
-                          (eql 'cl:concatenate (first value))
-                          (consp (cdr value))
-                          (eql 'cl:string (second value)))
-                     ;; a call to concatenate can be dealt with specially
-                     (progn
-                       (emit-princ " " key "=\"")
-                       (dolist (val (cddr value))
-                         (emit-princ val)))
-                     (emit-princ-attribute key value)))))))
+  (loop while attributes
+        for key = (pop attributes)
+        if (runtime-attribute-list-reference-p key)
+          do (emit-code `(loop for (name value) on ,(ralr-form key) by #'cddr
+                               unless (stringp name)
+                                 do (setf name (string-downcase (string name)))
+                               do (emit-attribute name value)))
+        else
+          do (let ((value (pop attributes)))
+               (cond
+                 ((eql t value)
+                  ;; according to xhtml thoses attributes which in html are
+                  ;; specified without a value should just use the attribute
+                  ;; name as the xhtml value
+                  (emit-princ " " key "=\"" key "\""))
+                 ((eql nil value) nil)
+                 ((yaclml-constant-p value)
+                  (progn
+                    (emit-princ " " key "=\"")
+                    (emit-html value)
+                    (emit-princ "\"")))
+                 (t
+                  (if (and (consp value)
+                           (eql 'cl:concatenate (first value))
+                           (consp (cdr value))
+                           (eql 'cl:string (second value)))
+                      ;; a call to concatenate can be dealt with specially
+                      (progn
+                        (emit-princ " " key "=\"")
+                        (dolist (val (cddr value))
+                          (emit-princ val)))
+                      (emit-princ-attribute key value))))))
   %yaclml-code%)
 
 (defun emit-indentation ()
@@ -303,7 +305,7 @@ BODY is simply the body of the expander lambda.
 Within the BODY the functions EMIT-CODE, EMIT-PRINC and EMIT-HTML can
 be used to generate code. EMIT-CODE should be passed lisp code which
 will be executed at runtime."
-  (with-unique-names (contents)
+  (alexandria:with-unique-names (contents)
     `(progn
        (setf (gethash ',name *expanders*)
              (lambda (,contents)
@@ -359,11 +361,11 @@ and just wrap the body in an xml tag."
          (emit-empty-tag ,(string-downcase (string name)) other-attributes))))
 
 (defmacro wrap-in-tag ((tag-name &rest tag-attributes) &body body)
-  (with-unique-names (tname)
+  (alexandria:with-unique-names (tname)
     `(let ((,tname ,(string-downcase (string tag-name))))
-      (emit-open-tag ,tname ,tag-attributes)
+       (emit-open-tag ,tname ,tag-attributes)
        (prog1
-          (progn ,@body)
+           (progn ,@body)
          (emit-close-tag ,tname)))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer

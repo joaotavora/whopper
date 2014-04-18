@@ -48,7 +48,7 @@ in LIST after attribute parsing is complete."
     (when (and other-attributes
                (not custom-attributes))
       (setf custom-attributes (gensym "CUSTOM-ATTRIBUTES")))
-    (with-unique-names (element)
+    (alexandria:with-unique-names (element)
       (rebinding (attribute-values)
         `(let ,(remove-if #'null (append locals
                                          attrs
@@ -62,19 +62,20 @@ in LIST after attribute parsing is complete."
                for local in locals
                collect `(setf ,local (pop ,attribute-values)))
            (setf ,attribute-values
-                 (iter (for el :in ,attribute-values)
-                   (cond ((and (listp el)
+                 (loop for el :in ,attribute-values
+                       if (and (listp el)
                                (symbolp (first el))
                                (string= "@" (first el)))
-                          ,(if custom-attributes
-                               `(setf ,custom-attributes
-                                      (append ,custom-attributes
-                                              (if (cddr el)
-                                                  (rest el)
-                                                  (list (make-runtime-attribute-list-reference
-                                                         :form (second el))))))
-                               `(error 'illegal-attribute-use :attribute-type "custom")))
-                         (t (collect el)))))
+                         do ,(if custom-attributes
+                                 `(setf ,custom-attributes
+                                        (append ,custom-attributes
+                                                (if (cddr el)
+                                                    (rest el)
+                                                    (list (make-runtime-attribute-list-reference
+                                                           :form (second el))))))
+                                 `(error 'illegal-attribute-use :attribute-type "custom"))
+                       else
+                         collect el))
            (loop while (and (consp ,attribute-values)
                             (keywordp (car ,attribute-values)))
                  do (let ((,element (pop ,attribute-values)))
@@ -123,9 +124,10 @@ in LIST after attribute parsing is complete."
   (:report (lambda (c s)
              (format s "Attributes of type '~A' are not allowed ~A (hint: missing &allow-custom-attributes?)."
                      (attribute-type c)
-                     (aif (tag c)
-                          (format nil "for tag ~A" it)
-                          "here")))))
+                     (let ((tag (tag c)))
+                       (if tag
+                           (format nil "for tag ~A" tag)
+                           "here"))))))
 
 (defun parse-attribute-spec (attribute-spec)
   "Parse an attribute spec into required args, attribute args,

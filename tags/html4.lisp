@@ -15,18 +15,16 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-effective-attributes (attributes)
-    (with-collector (attrs)
-      (dolist (attr attributes)
-        (case attr
-          (:core  (attrs 'class 'id 'style 'title))
-          (:i18n  (attrs 'dir 'lang))
-          (:event (attrs 'onclick 'ondblclick
-                         'onkeydown 'onkeypress
-                         'onkeyup 'onmousedown
-                         'onmousemove 'onmouseout
-                         'onmouseover 'onmouseup))
-          (t (attrs attr))))
-      (attrs))))
+    (loop for attr in attributes
+          append (case attr
+                   (:core  (list 'class 'id 'style 'title))
+                   (:i18n  (list 'dir 'lang))
+                   (:event (list 'onclick 'ondblclick
+                                 'onkeydown 'onkeypress
+                                 'onkeyup 'onmousedown
+                                 'onmousemove 'onmouseout
+                                 'onmouseover 'onmouseup))
+                   (t (list attr))))))
 
 (defmacro def-empty-html-tag (name &rest attributes)
   "Define a tag that has `End Tag` set to Forbidden and `Empty`
@@ -35,24 +33,24 @@ http://www.w3.org/TR/1999/REC-html401-19991224/index/elements.html
 used so generated XHTML would follow guidelines described in
 http://www.w3.org/TR/xhtml1/#guidelines"
   (let ((effective-attributes (make-effective-attributes attributes)))
-    (with-unique-names (custom-attributes)
+    (alexandria:with-unique-names (custom-attributes)
       `(deftag ,name (&attribute ,@effective-attributes
-                      &allow-custom-attributes ,custom-attributes)
+                                 &allow-custom-attributes ,custom-attributes)
          (emit-empty-tag ,(string-downcase (symbol-name name))
-                         (list ,@(iter (for attr :in effective-attributes)
-                                       (collect (string-downcase (symbol-name attr)))
-                                       (collect attr)))
+                         (list ,@(loop for attr in effective-attributes
+                                       collect (string-downcase (symbol-name attr))
+                                       collect attr))
                          ,custom-attributes)))))
 
 (defmacro def-html-tag (name &rest attributes)
   (let ((effective-attributes (make-effective-attributes attributes)))
-    (with-unique-names (custom-attributes)
+    (alexandria:with-unique-names (custom-attributes)
       `(deftag ,name (&attribute ,@effective-attributes
-                      &allow-custom-attributes ,custom-attributes &body body)
+                                 &allow-custom-attributes ,custom-attributes &body body)
          (emit-open-tag ,(string-downcase (symbol-name name))
-                        (list ,@(iter (for attr :in effective-attributes)
-                                      (collect (string-downcase (symbol-name attr)))
-                                      (collect attr)))
+                        (list ,@(loop for attr in effective-attributes
+                                      collect (string-downcase (symbol-name attr))
+                                      collect attr))
                         ,custom-attributes)
          (emit-body body)
          (emit-close-tag ,(string-downcase (symbol-name name)))))))
@@ -226,7 +224,7 @@ http://www.w3.org/TR/xhtml1/#guidelines"
                            &body body)
   (assert (or (and (not prologue)
                    (not doctype))
-              (xor prologue doctype)) () "You can only specify one of PROLOGUE or DOCTYPE")
+              (alexandria:xor prologue doctype)) () "You can only specify one of PROLOGUE or DOCTYPE")
   (when doctype
     (emit-code `(awhen ,doctype
                  (princ "<!DOCTYPE html PUBLIC " *yaclml-stream*)

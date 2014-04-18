@@ -5,8 +5,7 @@
 (defpackage :it.bese.yaclml
   (:nicknames :yaclml)
   (:documentation "Yet Another Common Lisp Markup Language")
-  (:use :common-lisp :it.bese.arnesi :iterate)
-  (:shadowing-import-from :iterate #:while #:until)
+  (:use :common-lisp)
   (:export
 
    ;; code generation
@@ -94,7 +93,7 @@
    #:actuate))
 
 (defpackage :it.bese.yaclml.svg
-  (:use :cl :it.bese.yaclml :iterate)
+  (:use :cl)
   (:documentation "SVG library.")
   (:nicknames :svg :<svg))
 
