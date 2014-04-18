@@ -57,48 +57,47 @@ in LIST after attribute parsing is complete."
                                          (list custom-attributes)
                                          (list body-var)))
            ,@(when body-var
-              `((declare (ignorable ,body-var))))
+               `((declare (ignorable ,body-var))))
            ,@(loop
-                for local in locals
-                collect `(setf ,local (pop ,attribute-values)))
+               for local in locals
+               collect `(setf ,local (pop ,attribute-values)))
            (setf ,attribute-values
                  (iter (for el :in ,attribute-values)
-                       (cond ((and (listp el)
-                                   (symbolp (first el))
-                                   (string= "@" (first el)))
-                              ,(if custom-attributes
-                                   `(setf ,custom-attributes
-                                          (append ,custom-attributes
-                                                  (if (cddr el)
-                                                      (rest el)
-                                                      (list (make-runtime-attribute-list-reference
-                                                             :form (second el))))))
-                                   `(error 'illegal-attribute-use :attribute-type "custom")))
-                             (t (collect el)))))
-           (iterate
-            (while (and (consp ,attribute-values)
-                        (keywordp (car ,attribute-values))))
-            (let ((,element (pop ,attribute-values)))
-              (case ,element
-                ,@(loop
-                     for attr in attrs
-                     ;; NB: ATTR is (symbol-to-bind-to default-value),
-                     ;; we want to match against the keyword whose
-                     ;; string name is (symbol-name symbol-to-bind-to),
-                     ;; hence the intern.
-                     collect `(,(intern (string (car attr)) :keyword) (setf ,(car attr) (pop ,attribute-values))))
-                ,@(loop
-                     for flag in flags
-                     collect `(,(intern (string flag) :keyword) (setf ,flag t)))
-                (t
-                 ,(if other-attributes
-                      `(progn
-                         (push ,element ,other-attributes)
-                         (push (pop ,attribute-values) ,other-attributes))
-                      `(error 'unrecognized-attribute :attribute ,element))))))
+                   (cond ((and (listp el)
+                               (symbolp (first el))
+                               (string= "@" (first el)))
+                          ,(if custom-attributes
+                               `(setf ,custom-attributes
+                                      (append ,custom-attributes
+                                              (if (cddr el)
+                                                  (rest el)
+                                                  (list (make-runtime-attribute-list-reference
+                                                         :form (second el))))))
+                               `(error 'illegal-attribute-use :attribute-type "custom")))
+                         (t (collect el)))))
+           (loop while (and (consp ,attribute-values)
+                            (keywordp (car ,attribute-values)))
+                 do (let ((,element (pop ,attribute-values)))
+                      (case ,element
+                        ,@(loop
+                            for attr in attrs
+                            ;; NB: ATTR is (symbol-to-bind-to default-value),
+                            ;; we want to match against the keyword whose
+                            ;; string name is (symbol-name symbol-to-bind-to),
+                            ;; hence the intern.
+                            collect `(,(intern (string (car attr)) :keyword) (setf ,(car attr) (pop ,attribute-values))))
+                        ,@(loop
+                            for flag in flags
+                            collect `(,(intern (string flag) :keyword) (setf ,flag t)))
+                        (t
+                         ,(if other-attributes
+                              `(progn
+                                 (push ,element ,other-attributes)
+                                 (push (pop ,attribute-values) ,other-attributes))
+                              `(error 'unrecognized-attribute :attribute ,element))))))
            ,(when (null body-var)
               `(when ,attribute-values
-                (warn "Ignoring extra elements in body: ~S" ,attribute-values)))
+                 (warn "Ignoring extra elements in body: ~S" ,attribute-values)))
            ,(when body-var
               `(setf ,body-var ,attribute-values))
            ,(when other-attributes
