@@ -1,0 +1,13 @@
+*.fas
+*.lib
+*.fasl
+*.a
+*.o
+*.*fasl
+*.*fsl
+*~
+*.swp
+\#*#
+TAGS
+make-image.lisp
+
