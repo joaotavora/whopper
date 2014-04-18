@@ -6,17 +6,16 @@
 (in-package :it.bese.yaclml.system)
 
 (defsystem :yaclml
-  :components ((:static-file "yaclml.asd")
-               (:file "packages")
-               (:file "yaclml" :depends-on ("packages" "attribute-bind"))
-               (:file "attribute-bind" :depends-on ("packages"))
+  :serial t
+  :components ((:file "package")
+               (:file "attribute-bind")
+               (:file "yaclml")
                (:module :tags
                 :serial t
                 :components ((:file "html4")
                              (:file "standard-yaclml")
                              (:file "svg")
-                             (:file "html+"))
-                :depends-on ("yaclml")))
+                             (:file "html+"))))
   :depends-on ())
 
 (defsystem :yaclml.test
