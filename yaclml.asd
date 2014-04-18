@@ -6,20 +6,18 @@
 (in-package :it.bese.yaclml.system)
 
 (defsystem :yaclml
-    :components ((:static-file "yaclml.asd")
-                 (:module :src
-                  :components ((:file "packages")
-                               (:file "yaclml" :depends-on ("packages" "attribute-bind"))
-                               (:file "attribute-bind" :depends-on ("packages"))
-                               (:module :tags
-                                :serial t
-                                :components ((:file "html4")
-                                             (:file "standard-yaclml")
-                                             (:file "svg")
-                                             (:file "html+"))
-                                :depends-on ("yaclml")))))
-    :properties ((:features "v0.5.2" "v0.5.1" "v0.5.0"))
-    :depends-on (:arnesi :iterate))
+  :components ((:static-file "yaclml.asd")
+               (:file "packages")
+               (:file "yaclml" :depends-on ("packages" "attribute-bind"))
+               (:file "attribute-bind" :depends-on ("packages"))
+               (:module :tags
+                :serial t
+                :components ((:file "html4")
+                             (:file "standard-yaclml")
+                             (:file "svg")
+                             (:file "html+"))
+                :depends-on ("yaclml")))
+  :depends-on ())
 
 (defsystem :yaclml.test
   :components ()
