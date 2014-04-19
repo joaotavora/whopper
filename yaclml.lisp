@@ -310,6 +310,12 @@ Within the BODY the functions EMIT-CODE, EMIT-PRINC and EMIT-HTML can
 be used to generate code. EMIT-CODE should be passed lisp code which
 will be executed at runtime."
   (alexandria:with-unique-names (contents)
+    (when (find-package :swank)
+      (destructuring-bind (req keyword-args &rest more)
+          (parse-attribute-spec attributes)
+        (declare (ignore req more))
+        (setf (get name (intern "SWANK-EXTRA-KEYWORDS" :swank))
+              keyword-args)))
     `(progn
        (setf (gethash ',name *expanders*)
              (lambda (,contents)
@@ -317,21 +323,21 @@ will be executed at runtime."
                                                    (setf (tag c) ,contents))))
                  (attribute-bind ,attributes ,contents
                    ,@body))))
-       (defmacro ,name (&rest contents)
+       (defmacro ,name (&body contents)
          (let ((%yaclml-code% nil)
-	       (%yaclml-indentation-depth% 0))
+               (%yaclml-indentation-depth% 0))
            ;; build tag's body
-	   (funcall (gethash ',name *expanders*) contents)
+           (funcall (gethash ',name *expanders*) contents)
            (setf %yaclml-code% (nreverse %yaclml-code%))
-	   ;; now that we've generated the code we can fold the
-	   ;; strings in yaclml-code and princ them, leaving any other
-	   ;; forms as they are.
+           ;; now that we've generated the code we can fold the
+           ;; strings in yaclml-code and princ them, leaving any other
+           ;; forms as they are.
            `(progn ,@(mapcar (lambda (form)
                                (if (stringp form)
                                    `(write-string ,form *yaclml-stream*)
-				   form))
+                                   form))
                              (fold-strings %yaclml-code%))
-             (values)))))))
+                   (values)))))))
 
 (defmacro deftag-macro (name attributes &body body)
   "Define a new YACLML tag macro.
