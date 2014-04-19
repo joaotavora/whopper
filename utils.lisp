@@ -1,4 +1,4 @@
-(in-package :it.bese.yaclml)
+(in-package :yaclml)
 
 ;;; A "faster" version for string concatenating.
 ;;; Could use just (apply #'concatenate 'string list), but that's quite slow

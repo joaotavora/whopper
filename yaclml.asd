@@ -1,9 +1,9 @@
 ;; -*- lisp -*-
 
-(defpackage :it.bese.yaclml.system
+(defpackage :yaclml-system
   (:use :common-lisp :asdf))
 
-(in-package :it.bese.yaclml.system)
+(in-package :yaclml-system)
 
 (defsystem :yaclml
   :serial t
@@ -19,13 +19,13 @@
                              (:file "html+"))))
   :depends-on (:alexandria))
 
-(defsystem :yaclml.test
+(defsystem :yaclml-test
   :components ()
   :depends-on (:yaclml :stefil))
 
 ;; (defmethod perform ((op asdf:test-op) (system (eql (find-system :yaclml))))
-;;   (asdf:oos 'asdf:load-op :yaclml.test)
-;;   (funcall (read-from-string "run-package-tests") :it.bese.yaclml.test))
+;;   (asdf:oos 'asdf:load-op :yaclml-test)
+;;   (funcall (read-from-string "run-package-tests") :yaclml-test))
 
 
 ;;;; * Introduction

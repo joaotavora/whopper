@@ -2,7 +2,7 @@
 
 (in-package :common-lisp-user)
 
-(defpackage :it.bese.yaclml
+(defpackage :yaclml
   (:nicknames :yaclml)
   (:documentation "Yet Another Common Lisp Markup Language")
   (:use :common-lisp)
@@ -42,7 +42,7 @@
    #:+xhtml-frameset-doctype+
    ))
 
-(defpackage :it.bese.yaclml.tags
+(defpackage :yaclml-tags
   (:nicknames :<)
   (:documentation "YACLML programmatic HTML generation.")
   (:use)
@@ -71,7 +71,7 @@
 ;; format incompatibilities.
 ;; TODO clean up, we have the (@ ...) syntax now. see also svg.lisp.
 
-(defpackage :it.bese.yaclml.xml
+(defpackage :yaclml-xml
   (:use)
   (:nicknames :xml)
   (:export
@@ -80,7 +80,7 @@
    #:lang
    #:space))
 
-(defpackage :it.bese.yaclml.xlink
+(defpackage :yaclml-xlink
   (:use)
   (:nicknames :xlink)
   (:export
@@ -92,7 +92,7 @@
    #:show
    #:actuate))
 
-(defpackage :it.bese.yaclml.svg
+(defpackage :yaclml-svg
   (:use :cl)
   (:documentation "SVG library.")
   (:nicknames :svg :<svg))

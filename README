@@ -1,7 +1,7 @@
 This is YACLML, Yet Another Common Lisp Markup Language.
 
 The documentation can be found in the docstrings, start with the
-package :it.bese.yaclml.
+package :yaclml.
 
 The mailing list for YACLML is bese-devel@common-lisp.net (the list is
 shared with FiveAM, arnesi, and ucw).
