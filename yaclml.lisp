@@ -233,19 +233,14 @@ as the value."
   "Emit the code required to print an open tag whose name is NAME and
 with the attributes ATTRIBUTES. ATTRIBUTES is expected to be an even
 long, setf-like list of name-value pairs defining the attributes."
-  (incf %yaclml-indentation-depth% 2)
   (emit-princ "<")
   (emit-princ name)
   (mapc #'emit-princ-attributes attributes)
-  (emit-indentation)
   (emit-princ ">"))
 
 (defun emit-close-tag (name)
   "Emit the code required to print a close tag whose name is NAME."
-  (decf %yaclml-indentation-depth% 2)
-  (emit-princ "</" name)
-  (emit-indentation)
-  (emit-princ ">"))
+  (emit-princ "</" name ">"))
 
 (defun emit-empty-tag (name &rest attributes)
   "Emit the code required to print an empty tag with name NAME and a
@@ -271,8 +266,17 @@ yaclml-constant-p - print the constant (after escape-as-html) to
 cons whose car is YACLML-QUOTE - emit-body on every element of the
 cdr.
 "
-  (dolist (form body)
-    (emit-form form)))
+  (cond ((and (not (second body))
+              (stringp (first body)))
+         (emit-form (first body)))
+        (t
+         (loop for (form . rest) on body
+               do (incf %yaclml-indentation-depth% 2)
+                  (emit-indentation)
+                  (emit-form form)
+                  (decf %yaclml-indentation-depth% 2)
+               unless rest
+                 do (emit-indentation)))))
 
 (defun emit-form (form)
   "Emits the code to print FORM."
