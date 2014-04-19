@@ -1,8 +1,8 @@
 ;; -*- lisp -*-
 
-(in-package :yaclml)
+(in-package :whopper)
 
-;;;; * YACLML - Programmatic HTML Generation
+;;;; * WHOPPER - Programmatic HTML Generation
 
 ;;;; The programmatic interface is a collection of Common Lisp macros
 ;;;; designed to make embedding HTML in lisp code easy. It was created
@@ -18,10 +18,10 @@
 ;;;; - Tags should be easily definable and should be able to perform
 ;;;;   arbitrary computations at both run time and compile time.
 
-;;;; ** Using YACLML Tag Macros
+;;;; ** Using WHOPPER Tag Macros
 
-;;;; You use YACLML tags just like regular macros, any attributes are
-;;;; passed in like keyword arguments. YACLML examines its args (at
+;;;; You use WHOPPER tags just like regular macros, any attributes are
+;;;; passed in like keyword arguments. WHOPPER examines its args (at
 ;;;; compile time) and distinguishes between the keyword arguments
 ;;;; which become attributes and everything else, which becomes the
 ;;;; tag's body. Tags all have the following syntax:
@@ -52,12 +52,12 @@
 
 ;;;; Every element of the tag body is processed in order: if it is a
 ;;;; form it is executed at runtime and must explicitly print to the
-;;;; stream *yaclml-stream* if it needs to generate output, if it is a
-;;;; string its value will be printed to *yaclml-stream* at run time.
+;;;; stream *whopper-stream* if it needs to generate output, if it is a
+;;;; string its value will be printed to *whopper-stream* at run time.
 
 ;;;; ** Examples
 
-;;;;   ;; Assuming *yaclml-stream* is bound to *standard-output*
+;;;;   ;; Assuming *whopper-stream* is bound to *standard-output*
 
 ;;;;   (<:a :href \"http://foo.com\" \"foo.com\")
 ;;;;   => 
@@ -71,30 +71,30 @@
 ;;;;   =>
 ;;;;   <td>whatever</td>
 
-(defvar *yaclml-stream* t
+(defvar *whopper-stream* t
   "The stream to which tags are printed.")
 
-(defvar *yaclml-indent* t
-  "When T (must be set while compiling yaclml code) the generated
+(defvar *whopper-indent* t
+  "When T (must be set while compiling whopper code) the generated
   HTML is indented.")
 
-(defvar %yaclml-indentation-depth% 0)
+(defvar %whopper-indentation-depth% 0)
 
-(defmacro with-yaclml-stream (stream &body body)
-  "Evaluate BODY with *yaclml-stream* bound to STREAM."
-  `(let ((*yaclml-stream* ,stream))
-     (declare (special *yaclml-stream*))
+(defmacro with-whopper-stream (stream &body body)
+  "Evaluate BODY with *whopper-stream* bound to STREAM."
+  `(let ((*whopper-stream* ,stream))
+     (declare (special *whopper-stream*))
      ,@body))
 
-(defmacro with-yaclml-output-to-string (&body body)
-  "Evaluate BODY with *yaclml-stream* bound to a string stream, return the string."
+(defmacro with-whopper-output-to-string (&body body)
+  "Evaluate BODY with *whopper-stream* bound to a string stream, return the string."
   (alexandria:with-unique-names (output)
     `(with-output-to-string (,output)
-       (with-yaclml-stream ,output
+       (with-whopper-stream ,output
          ,@body))))
 
-(defvar %yaclml-code% nil
-  "The list of currently collected code this yaclml macro should
+(defvar %whopper-code% nil
+  "The list of currently collected code this whopper macro should
    expand into.")
 
 (defvar *expanders* (make-hash-table :test 'eql)
@@ -103,8 +103,8 @@
 (defvar *expander-macros* (make-hash-table :test 'eql)
   "Hash table mapping expander macros to theri macre functions.")
 
-(defun yaclml-constant-p (thing)
-  "Returns T if THING is, as far as yaclml is concerned, a run time
+(defun whopper-constant-p (thing)
+  "Returns T if THING is, as far as whopper is concerned, a run time
   constant."
   (or (stringp thing)
       (characterp thing)
@@ -112,49 +112,49 @@
       (keywordp thing)))
 
 (defun emit-princ (&rest items)
-  "Emit to the current yaclml-code a form which will, at runtime,
-   princ ITEM. If (yaclml-constant-p ITEM) is true the princ will
+  "Emit to the current whopper-code a form which will, at runtime,
+   princ ITEM. If (whopper-constant-p ITEM) is true the princ will
    be done at compile time."
-  (dolist (item items %yaclml-code%)
+  (dolist (item items %whopper-code%)
     (push (cond
             ((stringp item)
              item)
             ((keywordp item)
              (string-downcase (princ-to-string item)))
-            ((yaclml-constant-p item)
+            ((whopper-constant-p item)
              (princ-to-string item))
-            (t `(princ ,item *yaclml-stream*)))
-          %yaclml-code%)))
+            (t `(princ ,item *whopper-stream*)))
+          %whopper-code%)))
 
 (defun emit-html (&rest items)
   "Like EMIT-PRINC but escapes html chars in item."
-  (dolist (item items %yaclml-code%)
-    (if (yaclml-constant-p item)
-        (push (escape-as-html (princ-to-string item)) %yaclml-code%)
-        (push `(emit-attribute-value ,item) %yaclml-code%))))
+  (dolist (item items %whopper-code%)
+    (if (whopper-constant-p item)
+        (push (escape-as-html (princ-to-string item)) %whopper-code%)
+        (push `(emit-attribute-value ,item) %whopper-code%))))
   
 (defun emit-code (&rest forms)
-  "Emit to the current yaclml-code CODE. This means that whatever
+  "Emit to the current whopper-code CODE. This means that whatever
    CODE is it will be run, and it's result will be ignored, at
    runtime."
-  (setf %yaclml-code% (nconc forms %yaclml-code%)))
+  (setf %whopper-code% (nconc forms %whopper-code%)))
 
 (defmacro emit-attribute (name value)
   (rebinding (value)
     `(case ,value
       ((t)
-       (princ #\Space *yaclml-stream*)
-       (princ ,name *yaclml-stream*)
-       (princ "=\"" *yaclml-stream*)
-       (princ ,name *yaclml-stream*)
-       (princ #\" *yaclml-stream*))
+       (princ #\Space *whopper-stream*)
+       (princ ,name *whopper-stream*)
+       (princ "=\"" *whopper-stream*)
+       (princ ,name *whopper-stream*)
+       (princ #\" *whopper-stream*))
       ((nil) nil)
       (t
-       (princ #\Space *yaclml-stream*)
-       (princ ,name *yaclml-stream*)
-       (princ "=\"" *yaclml-stream*)
+       (princ #\Space *whopper-stream*)
+       (princ ,name *whopper-stream*)
+       (princ "=\"" *whopper-stream*)
        (emit-attribute-value ,value)
-       (princ #\" *yaclml-stream*)))))
+       (princ #\" *whopper-stream*)))))
 
 (defun emit-princ-attribute (name value)
   (unless (stringp name)
@@ -164,21 +164,21 @@
      `(case ,value
        ((t)
         (princ ,(concatenate 'string " " name "=\"" name "\"")
-         *yaclml-stream*))
+         *whopper-stream*))
        ((nil) nil)
        (t
-        (princ ,(concatenate 'string " " name "=\"") *yaclml-stream*)
+        (princ ,(concatenate 'string " " name "=\"") *whopper-stream*)
         (emit-attribute-value ,value)
-        (princ "\"" *yaclml-stream*))))))
+        (princ "\"" *whopper-stream*))))))
 
 (defun emit-attribute-value (value)
   (if (listp value)
       (loop for el in value
             for i from 0
             unless (zerop i)
-              do (princ #\Space *yaclml-stream*)
-            do (write-as-html (princ-to-string el) :stream *yaclml-stream*))
-      (write-as-html (princ-to-string value) :stream *yaclml-stream*)))
+              do (princ #\Space *whopper-stream*)
+            do (write-as-html (princ-to-string el) :stream *whopper-stream*))
+      (write-as-html (princ-to-string value) :stream *whopper-stream*)))
 
 (defun emit-princ-attributes (attributes)
   "Assuming attributes is a list of (name1 value1 name2 value2 ...), emit
@@ -206,7 +206,7 @@ as the value."
                   ;; name as the xhtml value
                   (emit-princ " " key "=\"" key "\""))
                  ((eql nil value) nil)
-                 ((yaclml-constant-p value)
+                 ((whopper-constant-p value)
                   (progn
                     (emit-princ " " key "=\"")
                     (emit-html value)
@@ -222,12 +222,12 @@ as the value."
                         (dolist (val (cddr value))
                           (emit-princ val)))
                       (emit-princ-attribute key value))))))
-  %yaclml-code%)
+  %whopper-code%)
 
 (defun emit-indentation ()
-  (when *yaclml-indent*
+  (when *whopper-indent*
     (emit-princ #\Newline)
-    (emit-princ (make-string %yaclml-indentation-depth% :initial-element #\Space))))
+    (emit-princ (make-string %whopper-indentation-depth% :initial-element #\Space))))
 
 (defun emit-open-tag (name &rest attributes)
   "Emit the code required to print an open tag whose name is NAME and
@@ -260,10 +260,10 @@ with no further analysis.
 cons whose car is a known expander - simply call the expander function
 with the cdr of the cons as the arg.
 
-yaclml-constant-p - print the constant (after escape-as-html) to
-*yaclml-stream*.
+whopper-constant-p - print the constant (after escape-as-html) to
+*whopper-stream*.
 
-cons whose car is YACLML-QUOTE - emit-body on every element of the
+cons whose car is WHOPPER-QUOTE - emit-body on every element of the
 cdr.
 "
   (cond ((and (not (second body))
@@ -271,10 +271,10 @@ cdr.
          (emit-form (first body)))
         (t
          (loop for (form . rest) on body
-               do (incf %yaclml-indentation-depth% 2)
+               do (incf %whopper-indentation-depth% 2)
                   (emit-indentation)
                   (emit-form form)
-                  (decf %yaclml-indentation-depth% 2)
+                  (decf %whopper-indentation-depth% 2)
                unless rest
                  do (emit-indentation)))))
 
@@ -287,14 +287,14 @@ cdr.
            (emit-form (funcall (gethash op *expander-macros*) (cdr form))))
           ((gethash op *expanders*)
            (funcall (gethash op *expanders*) (cdr form)))
-          ((eql 'yaclml-quote op)
+          ((eql 'whopper-quote op)
            (dolist (b (cdr form))
              (emit-form b)))
           ((eql 'cl:progn op)
            (dolist (b (cdr form))
              (emit-form b)))
           (t (emit-code form))))
-      (if (yaclml-constant-p form)
+      (if (whopper-constant-p form)
           (emit-princ (escape-as-html (princ-to-string form)))
           (emit-code form))))
 
@@ -324,25 +324,25 @@ will be executed at runtime."
                  (attribute-bind ,attributes ,contents
                    ,@body))))
        (defmacro ,name (&body contents)
-         (let ((%yaclml-code% nil)
-               (%yaclml-indentation-depth% 0))
+         (let ((%whopper-code% nil)
+               (%whopper-indentation-depth% 0))
            ;; build tag's body
            (funcall (gethash ',name *expanders*) contents)
-           (setf %yaclml-code% (nreverse %yaclml-code%))
+           (setf %whopper-code% (nreverse %whopper-code%))
            ;; now that we've generated the code we can fold the
-           ;; strings in yaclml-code and princ them, leaving any other
+           ;; strings in whopper-code and princ them, leaving any other
            ;; forms as they are.
            `(progn ,@(mapcar (lambda (form)
                                (if (stringp form)
-                                   `(write-string ,form *yaclml-stream*)
+                                   `(write-string ,form *whopper-stream*)
                                    form))
-                             (fold-strings %yaclml-code%))
+                             (fold-strings %whopper-code%))
                    (values)))))))
 
 (defmacro deftag-macro (name attributes &body body)
-  "Define a new YACLML tag macro.
+  "Define a new WHOPPER tag macro.
 
-Tag macros, like regular macros, expand into other YACLML tag
+Tag macros, like regular macros, expand into other WHOPPER tag
 forms which are recursivly processed."
   (let ((contents (gensym))
         (doc-string (if (stringp (first body))
@@ -377,33 +377,3 @@ and just wrap the body in an xml tag."
        (prog1
            (progn ,@body)
          (emit-close-tag ,tname)))))
-
-;; Copyright (c) 2002-2005, Edward Marco Baringer
-;; All rights reserved. 
-;; 
-;; Redistribution and use in source and binary forms, with or without
-;; modification, are permitted provided that the following conditions are
-;; met:
-;; 
-;;  - Redistributions of source code must retain the above copyright
-;;    notice, this list of conditions and the following disclaimer.
-;; 
-;;  - Redistributions in binary form must reproduce the above copyright
-;;    notice, this list of conditions and the following disclaimer in the
-;;    documentation and/or other materials provided with the distribution.
-;;
-;;  - Neither the name of Edward Marco Baringer, nor BESE, nor the names
-;;    of its contributors may be used to endorse or promote products
-;;    derived from this software without specific prior written permission.
-;; 
-;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-;; "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-;; LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-;; A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
-;; OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-;; SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-;; LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-;; DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-;; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-;; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

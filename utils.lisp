@@ -1,4 +1,4 @@
-(in-package :yaclml)
+(in-package :whopper)
 
 ;;; A "faster" version for string concatenating.
 ;;; Could use just (apply #'concatenate 'string list), but that's quite slow

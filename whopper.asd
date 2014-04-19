@@ -1,40 +1,40 @@
 ;; -*- lisp -*-
 
-(defpackage :yaclml-system
+(defpackage :whopper-system
   (:use :common-lisp :asdf))
 
-(in-package :yaclml-system)
+(in-package :whopper-system)
 
-(defsystem :yaclml
+(defsystem :whopper
   :serial t
   :components ((:file "package")
                (:file "utils")
                (:file "attribute-bind")
                (:file "http")
-               (:file "yaclml")
+               (:file "whopper")
                (:module :tags
                 :serial t
                 :components ((:file "html4")
-                             (:file "standard-yaclml")
+                             (:file "standard-whopper")
                              (:file "html+"))))
   :depends-on (:alexandria))
 
-(defsystem :yaclml-test
+(defsystem :whopper-test
   :components ()
-  :depends-on (:yaclml :stefil))
+  :depends-on (:whopper :stefil))
 
-;; (defmethod perform ((op asdf:test-op) (system (eql (find-system :yaclml))))
-;;   (asdf:oos 'asdf:load-op :yaclml-test)
-;;   (funcall (read-from-string "run-package-tests") :yaclml-test))
+;; (defmethod perform ((op asdf:test-op) (system (eql (find-system :whopper))))
+;;   (asdf:oos 'asdf:load-op :whopper-test)
+;;   (funcall (read-from-string "run-package-tests") :whopper-test))
 
 
 ;;;; * Introduction
 
-;;;; YACLML is a library for creating HTML in lisp.
+;;;; WHOPPER is a library for creating HTML in lisp.
 
 ;;;;@include "src/packages.lisp"
 
-;;;;@include "src/yaclml.lisp"
+;;;;@include "src/whopper.lisp"
 
 ;;;;@include "src/attribute-bind.lisp"
 
@@ -42,4 +42,4 @@
 
 ;;;;@include "src/tags/html+.lisp"
 
-;;;;@include "src/tags/standard-yaclml.lisp"
+;;;;@include "src/tags/standard-whopper.lisp"
