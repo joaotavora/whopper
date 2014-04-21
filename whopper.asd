@@ -15,6 +15,7 @@
                (:module :tags
                 :serial t
                 :components ((:file "html4")
+                             (:file "html5")
                              (:file "standard-whopper")
                              (:file "html+"))))
   :depends-on (:alexandria))

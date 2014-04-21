@@ -23,6 +23,7 @@
    ;; defining tags
    #:deftag
    #:deftag-macro
+   #:def-html-tag
 
    ;; using whopper
    #:with-whopper-stream
@@ -46,6 +47,7 @@
   (:nicknames :<)
   (:documentation "WHOPPER programmatic HTML generation.")
   (:use)
+  (:import-from :whopper #:def-html-tag)
   (:export
    ;; HTML4
    #:a #:abbr #:acronym #:address #:area #:b #:base #:bdo #:big
@@ -57,19 +59,28 @@
    #:p #:param #:pre #:q #:samp #:script #:select #:small #:span
    #:strong #:style #:sub #:sup #:table #:tbody #:td #:textarea #:tfoot
    #:th #:thead #:title #:tr #:tt #:ul #:var
+
    ;; Not really HTML4, but close enough
    #:applet #:param #:marquee #:embed
+   
+   ;; new in HTML5 according to
+   ;; http://www.w3schools.com/html/html5_new_elements.asp
+   #:canvas #:audio #:embed #:source #:track #:video #:article #:aside
+   #:bdi #:details #:dialog #:figcaption #:figure #:footer #:header
+   #:main #:mark #:menuitem #:meter #:nav #:progress #:rp #:rt #:ruby
+   #:section #:summary #:time #:wbr #:datalist #:keygen #:output
+   
    ;; WHOPPER extended HTML
    #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
    #:as-is #:as-html #:call-with-whopper-stream #:comment #:progn
    #:&nbsp #:format
+   
    ;; whopper+ (shortcuts)
    #:ah #:ai))
 
 ;; the nicknames for these packages take care the svg tags
 ;; below don't signal an error.  because of symbol names and xml
 ;; format incompatibilities.
-;; TODO clean up, we have the (@ ...) syntax now. see also svg.lisp.
 
 (defpackage :whopper-xml
   (:use)
@@ -91,8 +102,3 @@
    #:title
    #:show
    #:actuate))
-
-(defpackage :whopper-svg
-  (:use :cl)
-  (:documentation "SVG library.")
-  (:nicknames :svg :<svg))

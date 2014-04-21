@@ -78,7 +78,7 @@
   "When T (must be set while compiling whopper code) the generated
   HTML is indented.")
 
-(defvar %whopper-indentation-depth% 0)
+(defvar %indent% 0)
 
 (defmacro with-whopper-stream (stream &body body)
   "Evaluate BODY with *whopper-stream* bound to STREAM."
@@ -93,7 +93,7 @@
        (with-whopper-stream ,output
          ,@body))))
 
-(defvar %whopper-code% nil
+(defvar %code% nil
   "The list of currently collected code this whopper macro should
    expand into.")
 
@@ -115,7 +115,7 @@
   "Emit to the current whopper-code a form which will, at runtime,
    princ ITEM. If (whopper-constant-p ITEM) is true the princ will
    be done at compile time."
-  (dolist (item items %whopper-code%)
+  (dolist (item items %code%)
     (push (cond
             ((stringp item)
              item)
@@ -124,20 +124,20 @@
             ((whopper-constant-p item)
              (princ-to-string item))
             (t `(princ ,item *whopper-stream*)))
-          %whopper-code%)))
+          %code%)))
 
 (defun emit-html (&rest items)
   "Like EMIT-PRINC but escapes html chars in item."
-  (dolist (item items %whopper-code%)
+  (dolist (item items %code%)
     (if (whopper-constant-p item)
-        (push (escape-as-html (princ-to-string item)) %whopper-code%)
-        (push `(emit-attribute-value ,item) %whopper-code%))))
+        (push (escape-as-html (princ-to-string item)) %code%)
+        (push `(emit-attribute-value ,item) %code%))))
   
 (defun emit-code (&rest forms)
   "Emit to the current whopper-code CODE. This means that whatever
    CODE is it will be run, and it's result will be ignored, at
    runtime."
-  (setf %whopper-code% (nconc forms %whopper-code%)))
+  (setf %code% (nconc forms %code%)))
 
 (defmacro emit-attribute (name value)
   (rebinding (value)
@@ -222,12 +222,12 @@ as the value."
                         (dolist (val (cddr value))
                           (emit-princ val)))
                       (emit-princ-attribute key value))))))
-  %whopper-code%)
+  %code%)
 
 (defun emit-indentation ()
   (when *whopper-indent*
     (emit-princ #\Newline)
-    (emit-princ (make-string %whopper-indentation-depth% :initial-element #\Space))))
+    (emit-princ (make-string %indent% :initial-element #\Space))))
 
 (defun emit-open-tag (name &rest attributes)
   "Emit the code required to print an open tag whose name is NAME and
@@ -271,10 +271,10 @@ cdr.
          (emit-form (first body)))
         (t
          (loop for (form . rest) on body
-               do (incf %whopper-indentation-depth% 2)
+               do (incf %indent% 2)
                   (emit-indentation)
                   (emit-form form)
-                  (decf %whopper-indentation-depth% 2)
+                  (decf %indent% 2)
                unless rest
                  do (emit-indentation)))))
 
@@ -324,11 +324,11 @@ will be executed at runtime."
                  (attribute-bind ,attributes ,contents
                    ,@body))))
        (defmacro ,name (&body contents)
-         (let ((%whopper-code% nil)
-               (%whopper-indentation-depth% 0))
+         (let ((%code% nil)
+               (%indent% 0))
            ;; build tag's body
            (funcall (gethash ',name *expanders*) contents)
-           (setf %whopper-code% (nreverse %whopper-code%))
+           (setf %code% (nreverse %code%))
            ;; now that we've generated the code we can fold the
            ;; strings in whopper-code and princ them, leaving any other
            ;; forms as they are.
@@ -336,7 +336,7 @@ will be executed at runtime."
                                (if (stringp form)
                                    `(write-string ,form *whopper-stream*)
                                    form))
-                             (fold-strings %whopper-code%))
+                             (fold-strings %code%))
                    (values)))))))
 
 (defmacro deftag-macro (name attributes &body body)
