@@ -33,7 +33,7 @@
            )
   (loop
     for char-code
-      across (sb-ext:string-to-octets string :external-format :utf-8)
+      across (babel:string-to-octets string :external-format :utf-8)
     do
        (if (aref (load-time-value *uri-escaping-ok-table* t) char-code)
            (write-char (code-char char-code) stream)
@@ -77,10 +77,10 @@
                        (error 'uri-parse-error :what input)
                        (return-from %unescape-as-uri
                          (restart-case
-                             (sb-ext:octets-to-string output :external-format :utf-8)
+                             (babel:octets-to-string output :external-format :utf-8)
                            (try-other-encoding (encoding)
                              :report "Try converting uri using other encoding"
-                             (sb-ext:octets-to-string output :external-format encoding))))))
+                             (babel:octets-to-string output :external-format encoding))))))
                  (prog1 (aref input input-index)
                    (incf input-index)))
                (write-next-byte (byte)
