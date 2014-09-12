@@ -229,26 +229,31 @@ as the value."
     (emit-princ #\Newline)
     (emit-princ (make-string %indent% :initial-element #\Space))))
 
+(defvar *tag-markers* '("<" ">" "/"))
+
 (defun emit-open-tag (name &rest attributes)
   "Emit the code required to print an open tag whose name is NAME and
 with the attributes ATTRIBUTES. ATTRIBUTES is expected to be an even
 long, setf-like list of name-value pairs defining the attributes."
-  (emit-princ "<")
+  (emit-princ (first *tag-markers*))
   (emit-princ name)
   (mapc #'emit-princ-attributes attributes)
-  (emit-princ ">"))
+  (emit-princ (second *tag-markers*)))
 
 (defun emit-close-tag (name)
   "Emit the code required to print a close tag whose name is NAME."
-  (emit-princ "</" name ">"))
+  (emit-princ (first *tag-markers*)
+              (third *tag-markers*)
+              name
+              (second *tag-markers*)))
 
 (defun emit-empty-tag (name &rest attributes)
   "Emit the code required to print an empty tag with name NAME and a
 attributes ATTRIBUTES. See EMIT-OPEN-TAG for more details."
-  (emit-princ "<" name)
+  (emit-princ (first *tag-markers*) name)
   (mapc #'emit-princ-attributes attributes)
   (emit-indentation)
-  (emit-princ "/>"))
+  (emit-princ (third *tag-markers*) (second *tag-markers*)))
 
 (defun emit-body (body)
   "Traverse body and emit the corresponding code. Every form in body
